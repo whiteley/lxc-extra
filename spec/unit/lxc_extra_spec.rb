@@ -4,7 +4,7 @@ describe LXC::Extra do
 
   before(:all) do
     c = LXC::Container.new('test')
-    c.create('ubuntu') unless c.defined?
+    c.create('download', nil, {}, 0, %w( -d ubuntu -r precise -a amd64 )) unless c.defined?
     c.start unless c.running?
   end
 
@@ -29,6 +29,7 @@ describe LXC::Extra do
         ct.execute {raise TestError}
       end.to raise_error(TestError)
     end
+
     it 'should respect timeout' do
       expect do
         ct.execute(timeout: 10) do
@@ -37,6 +38,18 @@ describe LXC::Extra do
           end
         end
       end.to raise_error Timeout::Error
+    end
+
+    it 'should mash many files' do
+      numfiles = 15000
+      o = ct.execute do
+        10000.upto(99999).take(numfiles).each do |n|
+          File.open("/tmp/lxc_#{n}", "w") do |f|
+            f.write("test")
+          end
+        end
+      end
+      expect(o).to eq(10000.upto(99999).take(numfiles))
     end
   end
 end
